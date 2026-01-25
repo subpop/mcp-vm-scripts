@@ -7,7 +7,7 @@ platform_check_prerequisites() {
     info "Checking prerequisites for libvirt/KVM..."
 
     # Check for required tools
-    for tool in virsh virt-install qemu-img genisoimage; do
+    for tool in virsh virt-install qemu-img xorriso; do
         if ! command -v $tool &> /dev/null; then
             error "$tool is required but not installed"
         fi

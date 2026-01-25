@@ -68,13 +68,13 @@ EOFUSERDATA
 
     case "$platform" in
         Linux)
-            # Use genisoimage on Linux
-            if ! command -v genisoimage &> /dev/null; then
+            # Use xorriso on Linux
+            if ! command -v xorriso &> /dev/null; then
                 rm -rf "$temp_dir"
-                error "genisoimage is required but not installed. Install with: sudo dnf install genisoimage"
+                error "xorriso is required but not installed. Install with: sudo dnf install xorriso"
             fi
 
-            genisoimage -output "$output_iso" -volid cidata -joliet -rock "$temp_dir" &>/dev/null
+            xorriso -as mkisofs -output "$output_iso" -volid cidata -joliet -rock "$temp_dir" &>/dev/null
             ;;
         Darwin)
             # Use hdiutil on macOS
