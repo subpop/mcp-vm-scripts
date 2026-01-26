@@ -82,11 +82,11 @@ EOFUSERDATA
                 error "xorriso is required but not installed. Install with: sudo dnf install xorriso"
             fi
 
-            xorriso -as mkisofs -output "$output_iso" -volid cidata -joliet -rock "$temp_dir" &>/dev/null
+            xorriso -as mkisofs -output "$output_iso" -volid CIDATA -joliet -rock "$temp_dir"
             ;;
         Darwin)
             # Use hdiutil on macOS
-            hdiutil makehybrid -o "$output_iso" -iso -joliet -default-volume-name cidata "$temp_dir" &>/dev/null
+            hdiutil makehybrid -o "$output_iso" -iso -joliet -default-volume-name CIDATA "$temp_dir"
             ;;
         *)
             rm -rf "$temp_dir"
