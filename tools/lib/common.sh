@@ -146,3 +146,25 @@ get_ssh_key() {
 
     SSH_KEY_CONTENT=$(cat "$SSH_PUBKEY")
 }
+
+# Get platform-specific cloud-init ISO path
+# Arguments:
+#   $1 - VM name
+# Returns:
+#   Prints cloud-init ISO path to stdout
+get_cloudinit_iso_path() {
+    local vm_name="$1"
+    local platform="$(uname -s)"
+
+    case "$platform" in
+        Linux)
+            echo "$HOME/.local/share/libvirt/images/$vm_name-cloudinit.iso"
+            ;;
+        Darwin)
+            echo "$HOME/.local/share/rhelmcp/disks/$vm_name-cloudinit.iso"
+            ;;
+        *)
+            error "Unsupported platform: $platform"
+            ;;
+    esac
+}

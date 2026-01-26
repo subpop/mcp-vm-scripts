@@ -71,8 +71,8 @@ platform_validate_base_image "$VERSION"
 # Check if VM already exists (platform-specific)
 platform_check_vm_exists "$VM_NAME"
 
-# Create cloud-init ISO
-CLOUDINIT_ISO=$(mktemp --suffix=.iso)
+# Create cloud-init ISO in permanent location
+CLOUDINIT_ISO=$(get_cloudinit_iso_path "$VM_NAME")
 create_cloudinit_iso "$VM_NAME" "$USER" "$SSH_KEY_CONTENT" "$REDHAT_ORG_ID" "$REDHAT_ACTIVATION_KEY" "$CLOUDINIT_ISO"
 
 # Create VM (platform-specific)
@@ -93,9 +93,6 @@ else
     warn "Could not determine VM IP address"
     warn "You may need to wait for the VM to boot and configure SSH manually"
 fi
-
-# Clean up cloud-init ISO
-cleanup_cloudinit_iso "$CLOUDINIT_ISO"
 
 # Display platform-specific management commands
 platform_display_management_commands "$VM_NAME" "$USER"

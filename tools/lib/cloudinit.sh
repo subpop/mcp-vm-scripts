@@ -52,6 +52,9 @@ runcmd:
   # Enable and start avahi for mDNS
   - systemctl enable avahi-daemon
   - systemctl start avahi-daemon
+  # Disable cloud-init to prevent it from running on subsequent boots
+  - systemctl disable cloud-init.service cloud-config.service cloud-final.service cloud-init-local.service
+  - touch /etc/cloud/cloud-init.disabled
   # Trigger SELinux relabel on next boot
   - touch /.autorelabel
 EOFUSERDATA
