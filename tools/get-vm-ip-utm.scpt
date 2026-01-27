@@ -18,27 +18,15 @@ on run argv
                 return ""
             end if
 
-            -- Get configuration
-            set vmConfig to configuration of targetVM
+            -- Query IP addresses from the running VM (returns list of text)
+            set ipAddresses to query ip of targetVM
 
-            -- Get network interfaces
-            set netInterfaces to network interfaces of vmConfig
-
-            -- Try to get IP from first network interface
-            if (count of netInterfaces) > 0 then
-                set firstInterface to item 1 of netInterfaces
-
-                -- Try to get IPv4 address
-                try
-                    set ipAddress to IPv4 address of firstInterface
-                    if ipAddress is not missing value and ipAddress is not "" then
-                        return ipAddress
-                    end if
-                end try
+            -- Return the first IP address (IPv4 is returned before IPv6 if available)
+            if (count of ipAddresses) > 0 then
+                return item 1 of ipAddresses
+            else
+                return ""
             end if
-
-            -- If we couldn't get IP from configuration, return empty string
-            return ""
 
         on error errMsg
             -- VM not found or other error
