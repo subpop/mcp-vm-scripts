@@ -157,8 +157,16 @@ EOF
         run_ansible_playbook "$VM_HOSTNAME" "$PLAYBOOK" "$USER"
     fi
 
-    # Display platform-specific management commands
-    platform_display_management_commands "$VM_NAME" "$USER"
+    # Display VM information and management commands
+    info ""
+    info "VM '$VM_NAME' is ready!"
+    info "Connect with: ssh $USER@$VM_HOSTNAME"
+    info ""
+    info "Manage this VM with:"
+    info "  mcpvm list              # List all VMs"
+    info "  mcpvm stop $VM_NAME     # Stop the VM"
+    info "  mcpvm start $VM_NAME    # Start the VM"
+    info "  mcpvm delete $VM_NAME   # Delete the VM"
 }
 
 # List command - list all mcpvm-managed VMs

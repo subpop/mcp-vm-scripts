@@ -162,25 +162,6 @@ platform_get_vm_ip() {
     return 1
 }
 
-# Display platform-specific management commands
-# Arguments:
-#   $1 - VM name
-#   $2 - Username
-platform_display_management_commands() {
-    local vm_name="$1"
-    local username="$2"
-
-    info ""
-    info "VM '$vm_name' is ready!"
-    info "You can connect with: ssh $username@$vm_name.local"
-    info ""
-    info "Useful commands:"
-    info "  virsh -c qemu:///system console $vm_name  # Connect to console"
-    info "  virsh -c qemu:///system shutdown $vm_name  # Shutdown VM"
-    info "  virsh -c qemu:///system start $vm_name     # Start VM"
-    info "  virsh -c qemu:///system undefine --remove-all-storage $vm_name  # Delete VM"
-}
-
 # List all VMs with mcpvm- prefix
 # Returns:
 #   Prints list of VM names and states to stdout
