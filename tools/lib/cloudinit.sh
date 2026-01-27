@@ -74,6 +74,11 @@ EOFUSERDATA
     sed "${sed_inplace[@]}" "s|__USERNAME__|$username|g" "$temp_dir/user-data"
     sed "${sed_inplace[@]}" "s|__SSH_KEY__|$ssh_key|g" "$temp_dir/user-data"
 
+    # Ensure output directory exists
+    local output_dir="$(dirname "$output_iso")"
+    mkdir -p "$output_dir"
+
+    # Create ISO based on platform
     case "$PLATFORM" in
         Linux)
             # Use xorriso on Linux
