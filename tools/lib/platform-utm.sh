@@ -151,6 +151,96 @@ platform_display_management_commands() {
     info ""
     info "Useful commands:"
     info "  Open UTM.app to manage the VM graphically"
-    info "  To start/stop: Use UTM.app interface"
-    info "  To delete: Remove the VM from UTM.app"
+    info "  To start/stop: Use UTM.app interface or mcpvm start/stop"
+    info "  To delete: Use mcpvm delete or remove from UTM.app"
+}
+
+# List all VMs with mcpvm- prefix
+# Returns:
+#   Prints list of VM names and states to stdout
+platform_list_vms() {
+    # Get all VM names from UTM
+    local vm_names=$(osascript -e 'tell application "UTM" to get name of every virtual machine' 2>/dev/null)
+
+    # Parse comma-separated list and filter for mcpvm- prefix
+    echo "$vm_names" | tr ',' '\n' | while read -r vm_name; do
+        # Trim whitespace
+        vm_name=$(echo "$vm_name" | xargs)
+        if [[ "$vm_name" =~ ^mcpvm- ]]; then
+            # Get VM state
+            local state=$(osascript -e "tell application \"UTM\" to get status of virtual machine named \"$vm_name\"" 2>/dev/null)
+            echo "$vm_name $state"
+        fi
+    done
+}
+
+# Start a VM
+# Arguments:
+#   $1 - VM name
+platform_start_vm() {
+    local vm_name="$1"
+
+    if ! platform_vm_exists "$vm_name"; then
+        error "VM '$vm_name' does not exist"
+    fi
+
+    local state=$(osascript -e "tell application \"UTM\" to get status of virtual machine named \"$vm_name\"" 2>/dev/null)
+    if [[ "$state" == "started" ]]; then
+        info "VM '$vm_name' is already running"
+        return 0
+    fi
+
+    info "Starting VM '$vm_name'..."
+    osascript -e "tell application \"UTM\" to start virtual machine named \"$vm_name\"" 2>/dev/null
+}
+
+# Stop a VM
+# Arguments:
+#   $1 - VM name
+platform_stop_vm() {
+    local vm_name="$1"
+
+    if ! platform_vm_exists "$vm_name"; then
+        error "VM '$vm_name' does not exist"
+    fi
+
+    local state=$(osascript -e "tell application \"UTM\" to get status of virtual machine named \"$vm_name\"" 2>/dev/null)
+    if [[ "$state" == "stopped" ]]; then
+        info "VM '$vm_name' is already stopped"
+        return 0
+    fi
+
+    info "Stopping VM '$vm_name'..."
+    osascript -e "tell application \"UTM\" to stop virtual machine named \"$vm_name\"" 2>/dev/null
+}
+
+# Delete a VM and its resources
+# Arguments:
+#   $1 - VM name
+platform_delete_vm() {
+    local vm_name="$1"
+
+    if ! platform_vm_exists "$vm_name"; then
+        error "VM '$vm_name' does not exist"
+    fi
+
+    # Stop VM if running
+    local state=$(osascript -e "tell application \"UTM\" to get status of virtual machine named \"$vm_name\"" 2>/dev/null)
+    if [[ "$state" == "started" ]]; then
+        info "Stopping VM '$vm_name'..."
+        osascript -e "tell application \"UTM\" to stop virtual machine named \"$vm_name\"" 2>/dev/null
+        sleep 2
+    fi
+
+    info "Deleting VM '$vm_name'..."
+    osascript -e "tell application \"UTM\" to delete virtual machine named \"$vm_name\"" 2>/dev/null
+
+    # Clean up cloud-init ISO
+    local cloudinit_iso="$HOME/.local/share/rhelmcp/disks/$vm_name-cloudinit.iso"
+    if [[ -f "$cloudinit_iso" ]]; then
+        info "Removing cloud-init ISO..."
+        rm -f "$cloudinit_iso"
+    fi
+
+    info "VM '$vm_name' deleted successfully"
 }

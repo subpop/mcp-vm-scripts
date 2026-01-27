@@ -180,3 +180,86 @@ platform_display_management_commands() {
     info "  virsh -c qemu:///system start $vm_name     # Start VM"
     info "  virsh -c qemu:///system undefine --remove-all-storage $vm_name  # Delete VM"
 }
+
+# List all VMs with mcpvm- prefix
+# Returns:
+#   Prints list of VM names and states to stdout
+platform_list_vms() {
+    # Get all VMs and filter for mcpvm- prefix
+    virsh -c qemu:///system list --all --name 2>/dev/null | grep "^mcpvm-" | while read -r vm_name; do
+        if [[ -n "$vm_name" ]]; then
+            local state=$(virsh -c qemu:///system domstate "$vm_name" 2>/dev/null)
+            echo "$vm_name $state"
+        fi
+    done
+}
+
+# Start a VM
+# Arguments:
+#   $1 - VM name
+platform_start_vm() {
+    local vm_name="$1"
+
+    if ! platform_vm_exists "$vm_name"; then
+        error "VM '$vm_name' does not exist"
+    fi
+
+    local state=$(virsh -c qemu:///system domstate "$vm_name" 2>/dev/null)
+    if [[ "$state" == "running" ]]; then
+        info "VM '$vm_name' is already running"
+        return 0
+    fi
+
+    info "Starting VM '$vm_name'..."
+    virsh -c qemu:///system start "$vm_name"
+}
+
+# Stop a VM
+# Arguments:
+#   $1 - VM name
+platform_stop_vm() {
+    local vm_name="$1"
+
+    if ! platform_vm_exists "$vm_name"; then
+        error "VM '$vm_name' does not exist"
+    fi
+
+    local state=$(virsh -c qemu:///system domstate "$vm_name" 2>/dev/null)
+    if [[ "$state" == "shut off" ]]; then
+        info "VM '$vm_name' is already stopped"
+        return 0
+    fi
+
+    info "Stopping VM '$vm_name'..."
+    virsh -c qemu:///system shutdown "$vm_name"
+}
+
+# Delete a VM and its resources
+# Arguments:
+#   $1 - VM name
+platform_delete_vm() {
+    local vm_name="$1"
+
+    if ! platform_vm_exists "$vm_name"; then
+        error "VM '$vm_name' does not exist"
+    fi
+
+    # Stop VM if running
+    local state=$(virsh -c qemu:///system domstate "$vm_name" 2>/dev/null)
+    if [[ "$state" == "running" ]]; then
+        info "Stopping VM '$vm_name'..."
+        virsh -c qemu:///system destroy "$vm_name" 2>/dev/null || true
+    fi
+
+    info "Deleting VM '$vm_name'..."
+    virsh -c qemu:///system undefine --remove-all-storage "$vm_name"
+
+    # Clean up cloud-init ISO
+    local cloudinit_iso="$HOME/.local/share/libvirt/images/$vm_name-cloudinit.iso"
+    if [[ -f "$cloudinit_iso" ]]; then
+        info "Removing cloud-init ISO..."
+        rm -f "$cloudinit_iso"
+    fi
+
+    info "VM '$vm_name' deleted successfully"
+}

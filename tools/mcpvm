@@ -144,22 +144,133 @@ EOF
 
 # List command - list all mcpvm-managed VMs
 cmd_list() {
-    error "list command not yet implemented"
+    if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+        cat <<EOF
+Usage: mcpvm list
+
+List all mcpvm-managed VMs and their status.
+EOF
+        exit 0
+    fi
+
+    local vms=$(platform_list_vms)
+    if [[ -z "$vms" ]]; then
+        info "No mcpvm-managed VMs found"
+    else
+        printf "%-30s %s\n" "NAME" "STATE"
+        printf "%-30s %s\n" "----" "-----"
+        echo "$vms" | while read -r name state; do
+            printf "%-30s %s\n" "$name" "$state"
+        done
+    fi
 }
 
 # Start command - start an existing VM
 cmd_start() {
-    error "start command not yet implemented"
+    local vm_name=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                cat <<EOF
+Usage: mcpvm start <NAME>
+
+Start an existing VM.
+
+Arguments:
+  <NAME>    VM name (must start with 'mcpvm-')
+EOF
+                exit 0
+                ;;
+            *)
+                if [[ -z "$vm_name" ]]; then
+                    vm_name="$1"
+                else
+                    error "Unknown argument: $1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$vm_name" ]]; then
+        error "Usage: mcpvm start <NAME>"
+    fi
+
+    validate_vm_name "$vm_name"
+    platform_start_vm "$vm_name"
 }
 
 # Stop command - stop a running VM
 cmd_stop() {
-    error "stop command not yet implemented"
+    local vm_name=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                cat <<EOF
+Usage: mcpvm stop <NAME>
+
+Stop a running VM.
+
+Arguments:
+  <NAME>    VM name (must start with 'mcpvm-')
+EOF
+                exit 0
+                ;;
+            *)
+                if [[ -z "$vm_name" ]]; then
+                    vm_name="$1"
+                else
+                    error "Unknown argument: $1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$vm_name" ]]; then
+        error "Usage: mcpvm stop <NAME>"
+    fi
+
+    validate_vm_name "$vm_name"
+    platform_stop_vm "$vm_name"
 }
 
 # Delete command - delete a VM
 cmd_delete() {
-    error "delete command not yet implemented"
+    local vm_name=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                cat <<EOF
+Usage: mcpvm delete <NAME>
+
+Delete a VM and all its resources.
+
+Arguments:
+  <NAME>    VM name (must start with 'mcpvm-')
+EOF
+                exit 0
+                ;;
+            *)
+                if [[ -z "$vm_name" ]]; then
+                    vm_name="$1"
+                else
+                    error "Unknown argument: $1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$vm_name" ]]; then
+        error "Usage: mcpvm delete <NAME>"
+    fi
+
+    validate_vm_name "$vm_name"
+    platform_delete_vm "$vm_name"
 }
 
 # Main command dispatch
