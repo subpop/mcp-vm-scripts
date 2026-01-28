@@ -173,24 +173,48 @@ EOF
 
 # List command - list all mcpvm-managed VMs
 cmd_list() {
-    if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
-        cat <<EOF
-Usage: mcpvm list
+    local name_only=false
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help|-h)
+                cat <<EOF
+Usage: mcpvm list [--name-only]
 
 List all mcpvm-managed VMs and their status.
+
+Options:
+  --name-only    Output only VM names, one per line (for scripting/completion)
 EOF
-        exit 0
-    fi
+                exit 0
+                ;;
+            --name-only)
+                name_only=true
+                shift
+                ;;
+            *)
+                error "Unknown argument: $1"
+                ;;
+        esac
+    done
 
     local vms=$(platform_list_vms)
     if [[ -z "$vms" ]]; then
-        info "No mcpvm-managed VMs found"
+        if [[ "$name_only" != true ]]; then
+            info "No mcpvm-managed VMs found"
+        fi
     else
-        printf "%-30s %s\n" "NAME" "STATE"
-        printf "%-30s %s\n" "----" "-----"
-        echo "$vms" | while read -r name state; do
-            printf "%-30s %s\n" "$name" "$state"
-        done
+        if [[ "$name_only" == true ]]; then
+            echo "$vms" | while read -r name state; do
+                echo "$name"
+            done
+        else
+            printf "%-30s %s\n" "NAME" "STATE"
+            printf "%-30s %s\n" "----" "-----"
+            echo "$vms" | while read -r name state; do
+                printf "%-30s %s\n" "$name" "$state"
+            done
+        fi
     fi
 }
 
