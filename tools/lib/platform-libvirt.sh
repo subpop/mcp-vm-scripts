@@ -166,13 +166,11 @@ platform_get_vm_ip() {
 # Returns:
 #   Prints list of VM names and states to stdout
 platform_list_vms() {
-    # Get all VMs and filter for mcpvm- prefix
-    virsh -c qemu:///system list --all --name 2>/dev/null | grep "^mcpvm-" | while read -r vm_name; do
-        if [[ -n "$vm_name" ]]; then
-            local state=$(virsh -c qemu:///system domstate "$vm_name" 2>/dev/null)
-            echo "$vm_name $state"
-        fi
-    done
+    # Parse table output directly to avoid per-VM domstate calls
+    # Table format: " Id   Name   State" with dashed separator line
+    virsh -c qemu:///system list --all --table 2>/dev/null | \
+        tail -n +3 | \
+        awk '$2 ~ /^mcpvm-/ {print $2, $3}'
 }
 
 # Start a VM
