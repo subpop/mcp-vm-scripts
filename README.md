@@ -44,15 +44,30 @@ REDHAT_ACTIVATION_KEY=myuser-rhelmcp
 ## Usage
 
 ```bash
-./tools/setup-vm.sh --version=<RHEL-MAJOR>.<RHEL-MINOR> <NAME>
+./tools/mcpvm <command> [options]
 ```
 
-**Example:**
+### Creating a VM
+
 ```bash
-./tools/setup-vm.sh --version=9.5 test-vm
+./tools/mcpvm setup --version=<RHEL-VERSION> [--playbook=<PATH>] [NAME]
 ```
 
-This will:
+**Examples:**
+```bash
+# Create a VM with auto-generated name (e.g., mcpvm-rustic-spatula)
+./tools/mcpvm setup --version=9.5
+
+# Create a VM with a specific name
+./tools/mcpvm setup --version=9.5 mcpvm-my-test
+
+# Create a VM and run an Ansible playbook after setup
+./tools/mcpvm setup --version=9.5 --playbook=configure.yml
+```
+
+**Note:** All VM names must start with `mcpvm-`. If no name is provided, a random name is generated in the format `mcpvm-<adjective>-<utensil>`.
+
+The setup command will:
 1. Validate prerequisites for your platform (Linux or macOS)
 2. Check that the base RHEL image exists
 3. Create a cloud-init ISO with:
@@ -66,7 +81,8 @@ This will:
    - **macOS**: Passes base image to UTM, which copies it into VM bundle via AppleScript
 5. Wait for VM to boot and acquire an IP address
 6. Configure SSH known_hosts for immediate passwordless access
-7. Display connection instructions
+7. Optionally run an Ansible playbook (if `--playbook` specified)
+8. Display connection instructions
 
 ## Connecting to VMs
 
@@ -79,37 +95,44 @@ Where `<username>` is your current system username.
 
 ## Managing VMs
 
-### Linux (libvirt)
+Use `mcpvm` commands for cross-platform VM management:
+
 ```bash
-# View console
-virsh -c qemu:///system console <NAME>
+# List all mcpvm-managed VMs
+./tools/mcpvm list
 
-# Shutdown
-virsh -c qemu:///system shutdown <NAME>
+# Stop a VM
+./tools/mcpvm stop mcpvm-my-test
 
-# Start
-virsh -c qemu:///system start <NAME>
+# Start a stopped VM
+./tools/mcpvm start mcpvm-my-test
 
-# Delete VM and storage
-virsh -c qemu:///system undefine --remove-all-storage <NAME>
+# Delete a VM and its resources
+./tools/mcpvm delete mcpvm-my-test
 ```
 
-### macOS (UTM)
-Use UTM.app for graphical management:
-- Start/stop VMs
-- Access console
-- Delete VMs
+### Platform-Specific Console Access
+
+For console access, use platform-specific tools:
+
+**Linux (libvirt):**
+```bash
+virsh -c qemu:///system console <NAME>
+```
+
+**macOS (UTM):**
+Open UTM.app and click on the VM to view its console.
 
 ## Architecture
 
 ### File Structure
-- `tools/setup-vm.sh` - Main entry point with platform detection
-- `tools/lib/common.sh` - Common utilities (logging, validation, SSH)
+- `tools/mcpvm` - Main entry point with subcommand dispatch
+- `tools/lib/common.sh` - Common utilities (logging, validation, SSH, Ansible)
 - `tools/lib/cloudinit.sh` - Cloud-init ISO generation (cross-platform)
 - `tools/lib/platform-libvirt.sh` - Linux/libvirt implementation
 - `tools/lib/platform-utm.sh` - macOS/UTM implementation
-- `tools/get-vm-ip-utm.scpt` - AppleScript helper for UTM IP lookup
-- `tools/run-vm-utm.scpt` - AppleScript helper for UTM VM creation
+- `tools/lib/applescript/run-vm-utm.scpt` - AppleScript helper for UTM VM creation
+- `tools/lib/applescript/get-vm-ip-utm.scpt` - AppleScript helper for UTM IP lookup
 
 ### Design Principles
 - Platform abstraction through function naming convention (`platform_*`)

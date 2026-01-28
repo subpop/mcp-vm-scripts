@@ -12,28 +12,34 @@ This is a cross-platform VM automation tool for creating Red Hat Enterprise Linu
 
 The codebase uses **platform abstraction** to support both Linux and macOS:
 
-1. **Main Entry Point**: `tools/setup-vm.sh`
+1. **Main Entry Point**: `tools/mcpvm`
+   - Multi-command CLI with subcommands: `setup`, `list`, `start`, `stop`, `delete`
    - Detects platform via `uname -s` (Linux/Darwin)
    - Sources the appropriate platform implementation
-   - Orchestrates the VM creation workflow
+   - Orchestrates VM lifecycle management
 
 2. **Platform Implementations**:
    - `tools/lib/platform-libvirt.sh` - Linux (KVM/libvirt/virsh)
    - `tools/lib/platform-utm.sh` - macOS (UTM via AppleScript)
 
 3. **Shared Libraries**:
-   - `tools/lib/common.sh` - Platform-agnostic utilities
+   - `tools/lib/common.sh` - Platform-agnostic utilities (validation, SSH, Ansible)
    - `tools/lib/cloudinit.sh` - Cloud-init ISO generation
+   - `tools/lib/applescript/*.scpt` - macOS UTM automation helpers
 
 ### Key Abstraction Pattern
 
 All platform-specific functions use the `platform_*` naming convention:
 - `platform_check_prerequisites()` - Verify required tools
 - `platform_validate_base_image()` - Check base image exists
-- `platform_check_vm_exists()` - Prevent duplicate VMs
+- `platform_check_vm_exists()` - Prevent duplicate VMs (exits on error)
+- `platform_vm_exists()` - Check if VM exists (returns boolean)
 - `platform_create_vm()` - Create and start VM
 - `platform_get_vm_ip()` - Retrieve VM IP address
-- `platform_display_management_commands()` - Show usage help
+- `platform_list_vms()` - List all mcpvm-managed VMs
+- `platform_start_vm()` - Start a stopped VM
+- `platform_stop_vm()` - Stop a running VM
+- `platform_delete_vm()` - Delete VM and clean up resources
 
 This allows the main script to call platform functions without knowing the implementation details.
 
@@ -95,7 +101,7 @@ Both provide DHCP and NAT for outbound connectivity.
 
 ## AppleScript Integration (macOS Only)
 
-Two AppleScript helpers enable UTM automation:
+Two AppleScript helpers in `tools/lib/applescript/` enable UTM automation:
 
 1. **run-vm-utm.scpt**: Creates and starts VMs
    - Uses UTM's AppleScript API
@@ -128,7 +134,7 @@ Edit `tools/lib/cloudinit.sh:create_cloudinit_iso()`:
 ### Supporting a New Platform
 1. Create `tools/lib/platform-<name>.sh`
 2. Implement all `platform_*` functions
-3. Add platform detection case in `tools/setup-vm.sh`
+3. Add platform detection case in `tools/mcpvm`
 4. Update ISO generation in `cloudinit.sh` if needed
 
 ### Modifying VM Resources
@@ -147,6 +153,12 @@ Edit `tools/lib/cloudinit.sh:create_cloudinit_iso()`:
 - VM disks are stored within UTM's VM bundles in ~/Library/Containers/com.utmapp.UTM/
 
 ### Debugging VM Creation Issues
+
+**Cross-platform**:
+```bash
+# List all mcpvm-managed VMs and their state
+./tools/mcpvm list
+```
 
 **Linux**:
 ```bash
@@ -222,10 +234,31 @@ If working with older commits, be aware of this architectural change.
 - **After**: Uses `xorriso` (Linux) / `hdiutil` (macOS)
 - **Reason**: `xorriso` is more actively maintained, ships with modern distros
 
+## VM Naming Convention
+
+All VMs managed by mcpvm use the `mcpvm-` prefix:
+- **Explicit names**: Must start with `mcpvm-` (e.g., `mcpvm-my-test`)
+- **Auto-generated names**: Format is `mcpvm-<adjective>-<utensil>` (e.g., `mcpvm-rustic-spatula`)
+- The prefix is enforced by `validate_vm_name()` in `common.sh`
+- `platform_list_vms()` filters VMs by this prefix
+
+**Why this matters**: The naming convention allows mcpvm to identify which VMs it manages vs. other VMs on the system.
+
+## Ansible Integration
+
+The `mcpvm setup --playbook=<path>` option enables post-provisioning automation:
+1. After VM creation and SSH setup, mcpvm waits for hostname resolution via mDNS
+2. This indicates cloud-init has completed and Avahi is running
+3. The specified Ansible playbook is then run against the VM
+
+Key functions in `common.sh`:
+- `wait_for_hostname_resolution()` - Polls until `<name>.local` resolves
+- `run_ansible_playbook()` - Executes playbook against the VM
+
 ## Known Limitations
 
 1. **IP Detection (macOS)**: UTM's AppleScript API doesn't always provide IP immediately
-2. **VM Name Restrictions**: Cannot contain periods (conflicts with hostname format)
+2. **VM Name Restrictions**: Must start with `mcpvm-` and cannot contain periods
 3. **Network Mode**: Fixed to shared/NAT (no bridged mode support currently)
 4. **Resource Configuration**: Hardcoded (4GB RAM, 2 vCPUs on Linux)
 5. **Disk Storage (macOS)**: UTM copies base images into VM bundles; no backing file support like libvirt
@@ -235,6 +268,7 @@ If working with older commits, be aware of this architectural change.
 Based on README notes and code structure:
 - Auto-create config.env with interactive prompts if missing
 - Auto-create `~/.local/share/rhelmcp/` directory
-- Make VM resources configurable via flags
+- Make VM resources configurable via flags (memory, CPUs)
 - Add VM snapshot/backup functionality
 - Support other Linux distros (currently RHEL-specific)
+- Console access subcommand (currently requires platform-specific tools)
