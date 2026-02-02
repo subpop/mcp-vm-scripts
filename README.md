@@ -31,6 +31,40 @@ Cross-platform scripts for automated RHEL virtual machine creation and configura
 - SSH key at `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub` (ed25519 preferred)
 - Configuration file at `~/.config/rhelmcp/config.env` (see Configuration section)
 
+## Installation
+
+### Adding mcpvm to Your PATH
+
+To use `mcpvm` from anywhere, create a symlink in a directory on your PATH:
+
+```bash
+mkdir -p ~/bin
+ln -s /path/to/mcp-vm-scripts/tools/mcpvm ~/bin/mcpvm
+```
+
+Ensure `~/bin` is in your PATH (add to `~/.bashrc` or `~/.zshrc` if needed):
+```bash
+export PATH="$HOME/bin:$PATH"
+```
+
+### Shell Completion
+
+#### Bash
+
+Add to your `~/.bashrc`:
+```bash
+source /path/to/mcp-vm-scripts/tools/mcpvm-bash-completion.sh
+```
+
+#### Zsh
+
+Add to your `~/.zshrc`:
+```bash
+source /path/to/mcp-vm-scripts/tools/mcpvm-zsh-completion.zsh
+```
+
+Or place in your `$fpath` as `_mcpvm` for standard zsh completion loading.
+
 ## Configuration
 
 Create `~/.config/rhelmcp/config.env` with your Red Hat subscription details:
