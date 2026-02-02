@@ -74,13 +74,13 @@ Base images must match the platform architecture.
 ## File Locations & Conventions
 
 ### User Configuration
-- **Config**: `~/.config/rhelmcp/config.env` (Red Hat subscription credentials)
+- **Config**: `~/.config/mcpvm/config.env` (Red Hat subscription credentials)
 - **SSH Key**: `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub` (ed25519 preferred, rsa fallback)
 
 ### VM Storage
-- **Base Images**: `~/.local/share/rhelmcp/rhel-X.Y-{x86_64-kvm,aarch64}.qcow2`
+- **Base Images**: `~/.local/share/mcpvm/rhel-X.Y-{x86_64-kvm,aarch64}.qcow2`
 - **Linux VM Disks**: `~/.local/share/libvirt/images/<name>.qcow2`
-- **macOS VM Disks**: `~/.local/share/rhelmcp/disks/<name>.qcow2`
+- **macOS VM Disks**: `~/.local/share/mcpvm/disks/<name>.qcow2`
 
 ### QCOW2 Backing Files
 VMs use QCOW2 backing files pointing to base images for storage efficiency. The `qemu-img create -b` command creates a copy-on-write overlay.
@@ -267,7 +267,7 @@ Key functions in `common.sh`:
 
 Based on README notes and code structure:
 - Auto-create config.env with interactive prompts if missing
-- Auto-create `~/.local/share/rhelmcp/` directory
+- Auto-create `~/.local/share/mcpvm/` directory
 - Make VM resources configurable via flags (memory, CPUs)
 - Add VM snapshot/backup functionality
 - Support other Linux distros (currently RHEL-specific)

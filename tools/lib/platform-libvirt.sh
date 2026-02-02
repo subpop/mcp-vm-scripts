@@ -27,7 +27,7 @@ platform_check_prerequisites() {
 #   Sets BASE_IMAGE variable with path to base image
 platform_validate_base_image() {
     local version="$1"
-    local image_dir="$HOME/.local/share/rhelmcp"
+    local image_dir="$HOME/.local/share/mcpvm"
     BASE_IMAGE="$image_dir/rhel-$version-x86_64-kvm.qcow2"
 
     if [[ ! -f "$BASE_IMAGE" ]]; then

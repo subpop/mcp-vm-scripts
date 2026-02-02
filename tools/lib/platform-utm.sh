@@ -32,7 +32,7 @@ platform_check_prerequisites() {
 #   Sets BASE_IMAGE variable with path to base image
 platform_validate_base_image() {
     local version="$1"
-    local image_dir="$HOME/.local/share/rhelmcp"
+    local image_dir="$HOME/.local/share/mcpvm"
     BASE_IMAGE="$image_dir/rhel-$version-aarch64-kvm.qcow2"
 
     if [[ ! -f "$BASE_IMAGE" ]]; then
@@ -218,7 +218,7 @@ platform_delete_vm() {
     osascript -e "tell application \"UTM\" to delete virtual machine named \"$vm_name\"" 2>/dev/null
 
     # Clean up cloud-init ISO
-    local cloudinit_iso="$HOME/.local/share/rhelmcp/disks/$vm_name-cloudinit.iso"
+    local cloudinit_iso="$HOME/.local/share/mcpvm/disks/$vm_name-cloudinit.iso"
     if [[ -f "$cloudinit_iso" ]]; then
         info "Removing cloud-init ISO..."
         rm -f "$cloudinit_iso"

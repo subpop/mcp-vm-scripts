@@ -20,16 +20,16 @@ Cross-platform scripts for automated RHEL virtual machine creation and configura
 ### Linux (libvirt/KVM)
 - `virsh`, `virt-install`, `qemu-img`, `xorriso`
 - libvirtd running with user permissions: `virsh -c qemu:///system list`
-- RHEL KVM image (x86_64) downloaded to `~/.local/share/rhelmcp/rhel-X.Y-x86_64-kvm.qcow2`
+- RHEL KVM image (x86_64) downloaded to `~/.local/share/mcpvm/rhel-X.Y-x86_64-kvm.qcow2`
 
 ### macOS (UTM)
 - UTM.app installed at `/Applications/UTM.app` ([Download](https://mac.getutm.app/))
 - `osascript`, `hdiutil` (built-in to macOS)
-- RHEL ARM64 image downloaded to `~/.local/share/rhelmcp/rhel-X.Y-aarch64-kvm.qcow2`
+- RHEL ARM64 image downloaded to `~/.local/share/mcpvm/rhel-X.Y-aarch64-kvm.qcow2`
 
 ### Both Platforms
 - SSH key at `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub` (ed25519 preferred)
-- Configuration file at `~/.config/rhelmcp/config.env` (see Configuration section)
+- Configuration file at `~/.config/mcpvm/config.env` (see Configuration section)
 
 ## Installation
 
@@ -67,12 +67,12 @@ Or place in your `$fpath` as `_mcpvm` for standard zsh completion loading.
 
 ## Configuration
 
-Create `~/.config/rhelmcp/config.env` with your Red Hat subscription details:
+Create `~/.config/mcpvm/config.env` with your Red Hat subscription details:
 
 ```bash
 # Get these from: https://console.redhat.com/insights/connector/activation-keys
 REDHAT_ORG_ID=1234567
-REDHAT_ACTIVATION_KEY=myuser-rhelmcp
+REDHAT_ACTIVATION_KEY=myuser-mcpvm
 ```
 
 ## Usage
@@ -183,5 +183,5 @@ https://access.redhat.com/downloads/content/rhel
 - **macOS**: Download ARM64 (aarch64) image
 
 Place downloaded images at:
-- **Linux**: `~/.local/share/rhelmcp/rhel-X.Y-x86_64-kvm.qcow2`
-- **macOS**: `~/.local/share/rhelmcp/rhel-X.Y-aarch64.qcow2`
+- **Linux**: `~/.local/share/mcpvm/rhel-X.Y-x86_64-kvm.qcow2`
+- **macOS**: `~/.local/share/mcpvm/rhel-X.Y-aarch64.qcow2`

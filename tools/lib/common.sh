@@ -180,10 +180,10 @@ validate_vm_name() {
     fi
 }
 
-# Load configuration from ~/.config/rhelmcp/config.env
+# Load configuration from ~/.config/mcpvm/config.env
 # Sets REDHAT_ORG_ID and REDHAT_ACTIVATION_KEY
 load_config() {
-    local config_file="$HOME/.config/rhelmcp/config.env"
+    local config_file="$HOME/.config/mcpvm/config.env"
     if [[ ! -f "$config_file" ]]; then
         error "Configuration file not found at $config_file"
     fi
@@ -263,7 +263,7 @@ get_cloudinit_iso_path() {
             echo "$HOME/.local/share/libvirt/images/$vm_name-cloudinit.iso"
             ;;
         Darwin)
-            echo "$HOME/.local/share/rhelmcp/disks/$vm_name-cloudinit.iso"
+            echo "$HOME/.local/share/mcpvm/disks/$vm_name-cloudinit.iso"
             ;;
         *)
             error "Unsupported platform: $PLATFORM"
