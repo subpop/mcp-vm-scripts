@@ -15,19 +15,16 @@ The codebase uses **platform abstraction** to support both Linux and macOS:
 1. **Main Entry Point**: `tools/mcpvm`
    - Multi-command CLI with subcommands: `setup`, `list`, `start`, `stop`, `delete`
    - Detects platform via `uname -s` (Linux/Darwin)
-   - On Darwin, `MCPVM_PLATFORM=vfkit` selects vfkit; otherwise UTM is used
    - Sources the appropriate platform implementation
    - Orchestrates VM lifecycle management
 
 2. **Platform Implementations**:
    - `tools/lib/platform-libvirt.sh` - Linux (KVM/libvirt/virsh)
-   - `tools/lib/platform-utm.sh` - macOS (UTM via AppleScript)
-   - `tools/lib/platform-vfkit.sh` - macOS (vfkit/Virtualization.framework, opt-in)
+   - `tools/lib/platform-vfkit.sh` - macOS (vfkit/Virtualization.framework)
 
 3. **Shared Libraries**:
    - `tools/lib/common.sh` - Platform-agnostic utilities (validation, SSH, Ansible)
    - `tools/lib/cloudinit.sh` - Cloud-init ISO generation
-   - `tools/lib/applescript/*.scpt` - macOS UTM automation helpers
 
 ### Key Abstraction Pattern
 
@@ -69,7 +66,7 @@ Both create ISO9660 images with Joliet extensions and volume label `cidata` (clo
 ### Architecture Differences
 
 - **Linux**: x86_64 VMs using libvirt/KVM
-- **macOS**: aarch64 (ARM64) VMs using UTM/QEMU
+- **macOS**: aarch64 (ARM64) VMs using vfkit/Virtualization.framework
 
 Base images must match the platform architecture.
 
@@ -97,24 +94,9 @@ VMs are configured to be accessible at `<name>.local` via:
 
 ### Platform Networking
 - **Linux**: Uses libvirt's `default` network (NAT with DHCP)
-- **macOS**: Uses UTM's `shared` network mode (vmnet-shared)
+- **macOS**: Uses vfkit's shared network (NAT with DHCP)
 
 Both provide DHCP and NAT for outbound connectivity.
-
-## AppleScript Integration (macOS Only)
-
-Two AppleScript helpers in `tools/lib/applescript/` enable UTM automation:
-
-1. **run-vm-utm.scpt**: Creates and starts VMs
-   - Uses UTM's AppleScript API
-   - Configures: memory (4GB), drives (QCOW2 + ISO), networking
-   - Backend: QEMU with virtio drivers
-
-2. **get-vm-ip-utm.scpt**: Retrieves IP addresses
-   - Queries UTM's network interface configuration
-   - Returns IPv4 address or empty string
-
-**Limitation**: UTM's AppleScript API has limited IP address visibility. The script tries to read from VM configuration, but may not always get the IP immediately.
 
 ## SSH Host Key Management
 
@@ -144,15 +126,12 @@ Edit `tools/lib/cloudinit.sh:create_cloudinit_iso()`:
 - `--memory 4096` - RAM in MB
 - `--vcpus 2` - CPU count
 
-**macOS**: Edit `run-vm-utm.scpt`, modify configuration variables:
-- `set vmMemory to 4096` - RAM in MB
-- No CPU count setting in current script (uses UTM defaults)
+**macOS**: Edit `platform-vfkit.sh:platform_create_vm()`, modify vfkit arguments:
+- Memory and CPU are passed to the vfkit command line
 
 **Note on Disk Management (macOS)**:
-- UTM automatically copies the base image into its VM bundle structure
-- The base image is passed directly to UTM via AppleScript
-- No intermediate backing files are created (unlike Linux which uses qemu-img)
-- VM disks are stored within UTM's VM bundles in ~/Library/Containers/com.utmapp.UTM/
+- vfkit uses CoW clones of the raw base image in `~/.local/share/mcpvm/vfkit/disks/`
+- Cloud-init ISO and VM state live under `~/.local/share/mcpvm/`
 
 ### Debugging VM Creation Issues
 
@@ -175,9 +154,9 @@ virsh -c qemu:///system dominfo <name>
 ```
 
 **macOS**:
-- Open UTM.app and check VM console
-- AppleScript errors appear in script output
-- Check system logs: Console.app, filter for UTM
+- Serial output is logged to `~/.local/share/mcpvm/vfkit/<name>-serial.log`
+- Check vfkit process and logs in `~/.local/share/mcpvm/vfkit/`
+- Check system logs: Console.app
 
 ## Error Handling Conventions
 
@@ -210,7 +189,7 @@ When creating commits, follow these conventions:
 - Platform-specific VM software must be installed
 
 ### Destructive Operations
-- VM creation modifies the libvirt/UTM database
+- VM creation modifies the libvirt database (Linux) or creates vfkit state (macOS)
 - Creates disk files that consume storage
 - Modifies `~/.ssh/known_hosts`
 
@@ -219,7 +198,7 @@ Always test with disposable VM names.
 ### Platform-Specific Testing
 You can only test the platform you're running on:
 - Linux CI: Can test libvirt path
-- macOS CI: Can test UTM path
+- macOS CI: Can test vfkit path
 - Cross-platform testing requires both environments
 
 ## Recent Changes & Migration
@@ -259,11 +238,10 @@ Key functions in `common.sh`:
 
 ## Known Limitations
 
-1. **IP Detection (macOS)**: UTM's AppleScript API doesn't always provide IP immediately
-2. **VM Name Restrictions**: Must start with `mcpvm-` and cannot contain periods
-3. **Network Mode**: Fixed to shared/NAT (no bridged mode support currently)
-4. **Resource Configuration**: Hardcoded (4GB RAM, 2 vCPUs on Linux)
-5. **Disk Storage (macOS)**: UTM copies base images into VM bundles; no backing file support like libvirt
+1. **VM Name Restrictions**: Must start with `mcpvm-` and cannot contain periods
+2. **Network Mode**: Fixed to shared/NAT (no bridged mode support currently)
+3. **Resource Configuration**: Hardcoded (4GB RAM, 2 vCPUs on Linux; vfkit resources in platform-vfkit.sh)
+4. **Disk Storage (macOS)**: vfkit uses CoW clones; base image can be raw or qcow2 (converted once)
 
 ## Future Enhancement Ideas
 

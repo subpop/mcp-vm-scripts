@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Platform-specific implementation for macOS using vfkit (Virtualization.framework)
-# Requires macOS 13+ for EFI bootloader. Enable with: MCPVM_PLATFORM=vfkit
+# Requires macOS 13+ for EFI bootloader.
 
 VFKIT_STATE_DIR="$HOME/.local/share/mcpvm/vfkit"
 VFKIT_DISKS_DIR="$VFKIT_STATE_DIR/disks"
@@ -349,7 +349,7 @@ platform_delete_vm() {
     rm -f "$VFKIT_STATE_DIR/$vm_name-serial.log"
     rm -f "$VFKIT_STATE_DIR/$vm_name.log"
 
-    # Cloud-init ISO is in mcpvm/disks (same as UTM)
+    # Cloud-init ISO is in mcpvm/disks
     local cloudinit_iso="$HOME/.local/share/mcpvm/disks/$vm_name-cloudinit.iso"
     if [[ -f "$cloudinit_iso" ]]; then
         info "Removing cloud-init ISO..."
