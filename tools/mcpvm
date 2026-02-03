@@ -11,12 +11,17 @@ source "$SCRIPT_DIR/lib/cloudinit.sh"
 
 # Platform detection and load platform-specific implementation
 PLATFORM="$(uname -s)"
+# On Darwin, MCPVM_PLATFORM=vfkit selects vfkit instead of UTM
 case "$PLATFORM" in
     Linux)
         source "$SCRIPT_DIR/lib/platform-libvirt.sh"
         ;;
     Darwin)
-        source "$SCRIPT_DIR/lib/platform-utm.sh"
+        if [[ "${MCPVM_PLATFORM:-}" == "vfkit" ]]; then
+            source "$SCRIPT_DIR/lib/platform-vfkit.sh"
+        else
+            source "$SCRIPT_DIR/lib/platform-utm.sh"
+        fi
         ;;
     *)
         error "Unsupported platform: $PLATFORM"
@@ -111,7 +116,15 @@ EOF
         validate_vm_name "$VM_NAME"
     fi
 
-    info "Setting up VM: $VM_NAME with RHEL $VERSION on $PLATFORM"
+    local backend
+    if [[ "$PLATFORM" == "Linux" ]]; then
+        backend="libvirt"
+    elif [[ "${MCPVM_PLATFORM:-}" == "vfkit" ]]; then
+        backend="vfkit"
+    else
+        backend="utm"
+    fi
+    info "Setting up VM: $VM_NAME with RHEL $VERSION ($backend)"
 
     # Check prerequisites (platform-specific)
     platform_check_prerequisites

@@ -15,12 +15,14 @@ The codebase uses **platform abstraction** to support both Linux and macOS:
 1. **Main Entry Point**: `tools/mcpvm`
    - Multi-command CLI with subcommands: `setup`, `list`, `start`, `stop`, `delete`
    - Detects platform via `uname -s` (Linux/Darwin)
+   - On Darwin, `MCPVM_PLATFORM=vfkit` selects vfkit; otherwise UTM is used
    - Sources the appropriate platform implementation
    - Orchestrates VM lifecycle management
 
 2. **Platform Implementations**:
    - `tools/lib/platform-libvirt.sh` - Linux (KVM/libvirt/virsh)
    - `tools/lib/platform-utm.sh` - macOS (UTM via AppleScript)
+   - `tools/lib/platform-vfkit.sh` - macOS (vfkit/Virtualization.framework, opt-in)
 
 3. **Shared Libraries**:
    - `tools/lib/common.sh` - Platform-agnostic utilities (validation, SSH, Ansible)
