@@ -59,6 +59,7 @@ platform_check_prerequisites() {
 #   $1 - RHEL version (e.g., 9.5)
 # Returns:
 #   Sets BASE_IMAGE variable with path to base image (raw)
+# Expects the KVM qcow2 image (official Red Hat format). Converts to raw on first use if needed.
 platform_validate_base_image() {
     local version="$1"
     local image_dir="$HOME/.local/share/mcpvm"
@@ -71,20 +72,20 @@ platform_validate_base_image() {
         return 0
     fi
 
-    if [[ -f "$qcow2_image" ]]; then
-        info "Raw image not found; converting from qcow2 (one-time)..."
-        if ! command -v qemu-img &> /dev/null; then
-            error "qemu-img is required to convert qcow2 to raw. Install with: brew install qemu"
-        fi
-        if ! qemu-img convert -f qcow2 -O raw "$qcow2_image" "$raw_image"; then
-            error "Failed to convert $qcow2_image to raw"
-        fi
-        BASE_IMAGE="$raw_image"
-        info "Base image ready: $BASE_IMAGE"
-        return 0
+    if [[ ! -f "$qcow2_image" ]]; then
+        error "Base image not found at $qcow2_image\n  Please download the RHEL $version KVM image from:\n  https://access.redhat.com/downloads/content/rhel\n  and place it at $qcow2_image"
     fi
 
-    error "Base image not found. For vfkit use either:\n  $raw_image\n  or $qcow2_image (will be converted to raw)\n  Download RHEL $version ARM64 from:\n  https://access.redhat.com/downloads/content/rhel"
+    info "Converting qcow2 to raw..."
+    if ! command -v qemu-img &> /dev/null; then
+        error "qemu-img is required to convert qcow2 to raw. Install with: brew install qemu"
+    fi
+    if ! qemu-img convert -f qcow2 -O raw "$qcow2_image" "$raw_image"; then
+        error "Failed to convert $qcow2_image to raw"
+    fi
+    BASE_IMAGE="$raw_image"
+    info "Base image ready: $BASE_IMAGE"
+    return 0
 }
 
 # Check if VM exists (has state file)
