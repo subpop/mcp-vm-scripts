@@ -1,12 +1,12 @@
 # RHEL VM Setup Scripts
 
-Cross-platform scripts for automated RHEL virtual machine creation and configuration. Supports both Linux (libvirt/KVM) and macOS (UTM).
+Cross-platform scripts for automated RHEL virtual machine creation and configuration. Supports Linux (libvirt/KVM) and macOS (vfkit).
 
 ## Features
 
 - **Cross-platform**: Automatically detects and uses the appropriate virtualization platform
   - Linux: libvirt/KVM
-  - macOS: UTM (QEMU backend)
+  - macOS: vfkit (Virtualization.framework)
 - **Automated Setup**: Creates fully configured VMs with:
   - Red Hat subscription registration
   - User account creation with SSH key authentication
@@ -22,10 +22,10 @@ Cross-platform scripts for automated RHEL virtual machine creation and configura
 - libvirtd running with user permissions: `virsh -c qemu:///system list`
 - RHEL KVM image (x86_64) downloaded to `~/.local/share/mcpvm/rhel-X.Y-x86_64-kvm.qcow2`
 
-### macOS (UTM)
-- UTM.app installed at `/Applications/UTM.app` ([Download](https://mac.getutm.app/))
-- `osascript`, `hdiutil` (built-in to macOS)
-- RHEL ARM64 image downloaded to `~/.local/share/mcpvm/rhel-X.Y-aarch64-kvm.qcow2`
+### macOS (vfkit)
+- macOS 13 or later (required for EFI boot in vfkit)
+- `vfkit` ([Install](https://github.com/crc-org/vfkit): `brew install vfkit`), `hdiutil`
+- RHEL ARM64 image: either `~/.local/share/mcpvm/rhel-X.Y-aarch64.raw` or `rhel-X.Y-aarch64-kvm.qcow2` (qcow2 will be converted to raw once using `qemu-img`; install with `brew install qemu` if needed)
 
 ### Both Platforms
 - SSH key at `~/.ssh/id_ed25519.pub` or `~/.ssh/id_rsa.pub` (ed25519 preferred)
@@ -112,7 +112,7 @@ The setup command will:
    - Avahi/mDNS setup
 4. Create the VM using platform-specific tools:
    - **Linux**: Creates VM disk with backing file, uses `virt-install`
-   - **macOS**: Passes base image to UTM, which copies it into VM bundle via AppleScript
+   - **macOS (vfkit)**: Uses vfkit with EFI boot; creates a CoW clone of the raw base image and runs vfkit in the background
 5. Wait for VM to boot and acquire an IP address
 6. Configure SSH known_hosts for immediate passwordless access
 7. Optionally run an Ansible playbook (if `--playbook` specified)
@@ -154,8 +154,8 @@ For console access, use platform-specific tools:
 virsh -c qemu:///system console <NAME>
 ```
 
-**macOS (UTM):**
-Open UTM.app and click on the VM to view its console.
+**macOS (vfkit):**
+Serial output is logged to `~/.local/share/mcpvm/vfkit/<NAME>-serial.log`.
 
 ## Architecture
 
@@ -164,9 +164,7 @@ Open UTM.app and click on the VM to view its console.
 - `tools/lib/common.sh` - Common utilities (logging, validation, SSH, Ansible)
 - `tools/lib/cloudinit.sh` - Cloud-init ISO generation (cross-platform)
 - `tools/lib/platform-libvirt.sh` - Linux/libvirt implementation
-- `tools/lib/platform-utm.sh` - macOS/UTM implementation
-- `tools/lib/applescript/run-vm-utm.scpt` - AppleScript helper for UTM VM creation
-- `tools/lib/applescript/get-vm-ip-utm.scpt` - AppleScript helper for UTM IP lookup
+- `tools/lib/platform-vfkit.sh` - macOS/vfkit implementation
 
 ### Design Principles
 - Platform abstraction through function naming convention (`platform_*`)
@@ -184,4 +182,4 @@ https://access.redhat.com/downloads/content/rhel
 
 Place downloaded images at:
 - **Linux**: `~/.local/share/mcpvm/rhel-X.Y-x86_64-kvm.qcow2`
-- **macOS**: `~/.local/share/mcpvm/rhel-X.Y-aarch64.qcow2`
+- **macOS**: `~/.local/share/mcpvm/rhel-X.Y-aarch64-kvm.qcow2` or `rhel-X.Y-aarch64.raw`
