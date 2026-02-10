@@ -213,6 +213,7 @@ get_ssh_key() {
         error "No SSH public key found. Expected ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub"
     fi
 
+    export SSH_KEY_CONTENT
     SSH_KEY_CONTENT=$(cat "$SSH_PUBKEY")
 }
 
