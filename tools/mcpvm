@@ -6,7 +6,9 @@ set -e
 # Resolve symlinks to find the actual script location
 SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+# shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
+# shellcheck source=lib/cloudinit.sh
 source "$SCRIPT_DIR/lib/cloudinit.sh"
 
 # Platform detection and load platform-specific implementation
