@@ -24,7 +24,7 @@ warn() {
 # Get the directory where the script is located
 # Returns absolute path to tools/ directory
 get_script_dir() {
-    echo "$(cd "$(dirname "${BASH_SOURCE[1]}")" && pwd)"
+    cd "$(dirname "${BASH_SOURCE[1]}")" && pwd
 }
 
 # Wait for SSH to be available and add host keys to known_hosts
