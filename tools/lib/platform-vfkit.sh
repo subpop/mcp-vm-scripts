@@ -357,3 +357,17 @@ platform_delete_vm() {
 
     info "VM '$vm_name' deleted successfully"
 }
+
+# Resolve hostname via mDNS
+# Arguments:
+#   $1 - hostname (e.g., myvm.local)
+# Returns:
+#   0 if hostname is resolvable, 1 otherwise
+platform_resolve_hostname() {
+    local hostname="$1"
+
+    if dscacheutil -q host -a name "$hostname" &>/dev/null; then
+        return 0
+    fi
+    return 1
+}
