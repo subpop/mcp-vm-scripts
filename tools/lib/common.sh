@@ -119,7 +119,7 @@ wait_for_hostname_resolution() {
 
     while [[ $attempt -lt $max_retries ]]; do
         # Try to resolve the hostname
-        if getent hosts "$hostname" &>/dev/null; then
+        if platform_resolve_hostname "$hostname"; then
             info "Hostname $hostname is now resolvable"
             return 0
         fi
